@@ -11,8 +11,8 @@ class Pelicula (models.Model):
     genero = models.CharField(max_length=20)
     clasificacion = models.CharField(max_length=20)
     estado = models.BooleanField(default=False)
-    fechaComienzo = models.DateField(auto_now_add=True)
-    fechaFin = models.DateField(auto_now_add=True)
+    fechaComienzo = models.DateField()
+    fechaFin = models.DateField()
 
 
 class Sala (models.Model):
@@ -25,14 +25,14 @@ class Sala (models.Model):
 class Proyeccion (models.Model):
     sala = models.ForeignKey('Sala', on_delete=models.CASCADE, )
     pelicula = models.ForeignKey('Pelicula', on_delete=models.CASCADE, )
-    fechaInicio = models.DateField(auto_now_add=True)
-    fechaFin = models.DateField(auto_now_add=True)
-    horaProyeccion = models.TimeField(auto_now_add=True)
+    fechaInicio = models.DateField()
+    fechaFin = models.DateField()
+    horaProyeccion = models.TimeField()
     estado = models.CharField(max_length=20)
 
 
 class Butaca(models.Model):
     proyeccion = models.ForeignKey('Proyeccion', on_delete=models.CASCADE,)
-    fecha = models.DateTimeField()
+    fecha = models.DateTimeField(auto_now_add=True)
     fila = models.IntegerField()
     asiento = models.IntegerField()

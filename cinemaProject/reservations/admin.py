@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Pelicula, Sala, Proyeccion, Butaca;
+from .models import Pelicula, Sala, Proyeccion, Butaca
 
 # Register your models here.
 
