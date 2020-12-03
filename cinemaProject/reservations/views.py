@@ -91,7 +91,7 @@ def sala_detail(request, pk):
 
 
 # Proyecciones
-@api_view(['GET'])
+@api_view(['GET','POST'])
 def proyecciones_list(request,):
 
         if request.method == 'GET':
@@ -104,7 +104,12 @@ def proyecciones_list(request,):
             proyecciones_serializer = ProyeccionSerializer(proyeccion, many=True)
             return JsonResponse(proyecciones_serializer.data, safe=False, status=status.HTTP_200_OK)
 
-
+        elif request.method == 'POST':
+            proyeccion_data = JSONParser().parse(request)
+            proyeccion_serializer = ProyeccionSerializer(data=proyeccion_data)
+            if proyeccion_serializer.is_valid():
+                proyeccion_serializer.save()
+                return JsonResponse(proyeccion_serializer.data, status=status.HTTP_201_CREATED)
 
 @api_view(['GET', 'POST', 'PUT'])
 def proyeccion_datail(request, pk):
