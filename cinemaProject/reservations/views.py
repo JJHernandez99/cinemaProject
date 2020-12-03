@@ -93,15 +93,15 @@ def sala_detail(request, pk):
 # Proyecciones
 @api_view(['GET','POST'])
 def proyecciones_list(request,):
-
+        fecha_actual = dt.date.today()
         if request.method == 'GET':
             proyecciones = Proyeccion.objects.all()
-            filtro=[]
-            proyeccion=[]
+            proyecciones_hab=[]
             for proyeccion in proyecciones:
-                if(Pelicula.objects.get(pk=proyeccion.pelicula.estado==True)):
-                    filtro.append(proyeccion)
-            proyecciones_serializer = ProyeccionSerializer(proyeccion, many=True)
+                pelicula=Pelicula.objects.get(id=proyeccion.pelicula.pk,)
+                if(pelicula.estado and pelicula.fechaFin > fecha_actual and pelicula.fechaComienzo<=fecha_actual):
+                    proyecciones_hab.append(proyeccion)
+            proyecciones_serializer = ProyeccionSerializer(proyecciones_hab, many=True)
             return JsonResponse(proyecciones_serializer.data, safe=False, status=status.HTTP_200_OK)
 
         elif request.method == 'POST':
@@ -111,6 +111,21 @@ def proyecciones_list(request,):
                 proyeccion_serializer.save()
                 return JsonResponse(proyeccion_serializer.data, status=status.HTTP_201_CREATED)
 
+
+@api_view(['GET'])
+def proyecciones_list_range(request, fecha):
+    fecha_actual = dt.date.today()
+    if request.method == 'GET':
+        proyecciones = Proyeccion.objects.all()
+        proyecciones_hab = []
+        for proyeccion in proyecciones:
+            pelicula = Pelicula.objects.get(id=proyeccion.pelicula.pk, )
+            if (pelicula.estado and pelicula.fechaFin > fecha_actual and pelicula.fechaComienzo <= fecha_actual):
+                proyecciones_hab.append(proyeccion)
+        proyecciones_serializer = ProyeccionSerializer(proyecciones_hab, many=True)
+        return JsonResponse(proyecciones_serializer.data, safe=False, status=status.HTTP_200_OK)
+
+
 @api_view(['GET', 'POST', 'PUT'])
 def proyeccion_datail(request, pk):
     try:
@@ -119,15 +134,6 @@ def proyeccion_datail(request, pk):
         if request.method == 'GET':
             proyeccion_serializer = ProyeccionSerializer(proyeccion)
             return JsonResponse(proyeccion_serializer.data, safe=False, status=status.HTTP_200_OK)
-
-
-        elif request.method == 'POST':
-            proyeccion_data = JSONParser().parse(request)
-            proyeccion_serializer = ProyeccionSerializer(data=proyeccion_data)
-            if proyeccion_serializer.is_valid():
-                proyeccion_serializer.save()
-                return JsonResponse(proyeccion_serializer.data, status=status.HTTP_201_CREATED)
-
 
         elif request.method == 'PUT':
             proyeccion_data = JSONParser().parse(request)
