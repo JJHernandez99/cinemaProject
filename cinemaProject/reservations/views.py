@@ -4,14 +4,16 @@ from rest_framework import status
 from .models import Pelicula, Sala, Butaca, Proyeccion
 from .serializers import PeliculaSerializer, SalaSerializer, ButacaSerializer, ProyeccionSerializer
 from rest_framework.decorators import api_view
+import datetime
 
 #Peliculas
 @api_view(['GET', 'POST'])
 def peliculas_list(request):
 
     if request.method == 'GET':
-        peliculas = Pelicula.objects.all()
-        peliculas_serializer = PeliculaSerializer(peliculas, many = True)
+        fecha=datetime.datetime.now()
+        pelicula = Pelicula.objects.filter(fechaFin__gte=(fecha-datetime.timedelta(days=5)),fechaComienzo__lte=(fecha+datetime.timedelta(days=5)))
+        peliculas_serializer = PeliculaSerializer(pelicula, many = True)
         return JsonResponse(peliculas_serializer.data, safe = False, status=status.HTTP_200_OK)
 
     elif request.method == 'POST':
@@ -25,7 +27,7 @@ def peliculas_list(request):
 
 #Get proyeccion + fecha
 @api_view(['GET'])
-def pelicula_datail(request,pk,):
+def pelicula_detail(request,pk,):
     
         pelicula = Pelicula.objects.get(pk=pk)
 
