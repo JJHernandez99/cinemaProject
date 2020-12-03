@@ -80,10 +80,10 @@ WSGI_APPLICATION = 'cinemaProject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'cinemadb',
+        'NAME': 'cinemaDB',
         'USER': 'root',
-        'PASSWORD': '123456',
-        'HOST': '34.95.172.194',
+        'PASSWORD': '12345678',
+        'HOST': 'cinemadbaws.cgn9ojhysipa.sa-east-1.rds.amazonaws.com',
         'PORT': '3306',
     }
 }
