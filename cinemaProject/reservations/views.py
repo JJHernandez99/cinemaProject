@@ -42,7 +42,6 @@ def salas_list(request):
         salas = Sala.objects.all()
         salas_serializer = SalaSerializer(salas, many = True)
         return JsonResponse(salas_serializer.data, safe = False, status=status.HTTP_200_OK)
-    #get de todas las peliculas en un rango de fecha
 
     elif request.method == 'POST':
         salas_data = JSONParser().parse(request)
