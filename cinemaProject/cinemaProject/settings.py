@@ -80,10 +80,10 @@ WSGI_APPLICATION = 'cinemaProject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'cinemadb4free',
-        'USER': 'testuserdbcine',
-        'PASSWORD': '12345678',
-        'HOST': 'db4free.net',
+        'NAME': 'cinemadb',
+        'USER': 'root',
+        'PASSWORD': '123456',
+        'HOST': '34.95.172.194',
         'PORT': '3306',
     }
 }
