@@ -15,7 +15,7 @@ def peliculas_list(request):
         ventana_tiempo = dt.timedelta(days=10)
         pelicula = Pelicula.objects.filter(fechaFin__gte=(fecha_actual - ventana_tiempo),
                                            fechaComienzo__lte=(fecha_actual + ventana_tiempo))
-        #pelicula=Pelicula.objects.all() trae todas las peliculas
+        # pelicula=Pelicula.objects.all() trae todas las peliculas
         peliculas_serializer = PeliculaSerializer(pelicula, many=True)
         return JsonResponse(peliculas_serializer.data, safe=False, status=status.HTTP_200_OK)
 
@@ -91,36 +91,37 @@ def sala_detail(request, pk):
 
 
 # Proyecciones
-@api_view(['GET','POST'])
-def proyecciones_list(request,):
-        fecha_actual = dt.date.today()
-        if request.method == 'GET':
-            proyecciones = Proyeccion.objects.all()
-            proyecciones_hab=[]
-            for proyeccion in proyecciones:
-                pelicula=Pelicula.objects.get(id=proyeccion.pelicula.pk,)
-                if(pelicula.estado and pelicula.fechaFin > fecha_actual and pelicula.fechaComienzo<=fecha_actual):
-                    proyecciones_hab.append(proyeccion)
-            proyecciones_serializer = ProyeccionSerializer(proyecciones_hab, many=True)
-            return JsonResponse(proyecciones_serializer.data, safe=False, status=status.HTTP_200_OK)
+@api_view(['GET', 'POST'])
+def proyecciones_list(request, ):
+    fecha_actual = dt.date.today()
+    if request.method == 'GET':
+        proyecciones = Proyeccion.objects.all()
+        proyecciones_pos = []
+        for proyeccion in proyecciones:
+            pelicula = Pelicula.objects.get(id=proyeccion.pelicula.pk, )
+            if pelicula.estado:
+                if pelicula.fechaFin > fecha_actual >= pelicula.fechaComienzo:
+                    proyecciones_pos.append(proyeccion)
+        proyecciones_serializer = ProyeccionSerializer(proyecciones_pos, many=True)
+        return JsonResponse(proyecciones_serializer.data, safe=False, status=status.HTTP_200_OK)
 
-        elif request.method == 'POST':
-            proyeccion_data = JSONParser().parse(request)
-            proyeccion_serializer = ProyeccionSerializer(data=proyeccion_data)
-            if proyeccion_serializer.is_valid():
-                proyeccion_serializer.save()
-                return JsonResponse(proyeccion_serializer.data, status=status.HTTP_201_CREATED)
+    elif request.method == 'POST':
+        proyeccion_data = JSONParser().parse(request)
+        proyeccion_serializer = ProyeccionSerializer(data=proyeccion_data)
+        if proyeccion_serializer.is_valid():
+            proyeccion_serializer.save()
+            return JsonResponse(proyeccion_serializer.data, status=status.HTTP_201_CREATED)
 
 
 @api_view(['GET'])
 def proyecciones_list_range(request, fecha):
-    fecha_actual = dt.date.today()
+    fecha_obj = dt.datetime.strptime(fecha, '%d-%m-%Y').date()
     if request.method == 'GET':
         proyecciones = Proyeccion.objects.all()
         proyecciones_hab = []
         for proyeccion in proyecciones:
             pelicula = Pelicula.objects.get(id=proyeccion.pelicula.pk, )
-            if (pelicula.estado and pelicula.fechaFin > fecha_actual and pelicula.fechaComienzo <= fecha_actual):
+            if pelicula.estado and pelicula.fechaFin > fecha_obj >= pelicula.fechaComienzo:
                 proyecciones_hab.append(proyeccion)
         proyecciones_serializer = ProyeccionSerializer(proyecciones_hab, many=True)
         return JsonResponse(proyecciones_serializer.data, safe=False, status=status.HTTP_200_OK)
@@ -148,7 +149,7 @@ def proyeccion_datail(request, pk):
 
 # get proyeccion + fecha
 @api_view(['GET'])
-def proyeccion_datail_date(request, pk, date):
+def proyeccion_datail_date(request, pk):
     proyeccion = Proyeccion.objects.get(pk=pk)
 
     if request.method == 'GET':
@@ -174,14 +175,12 @@ def butaca_datail(request, pk):
             butaca_serializer = ButacaSerializer(butaca)
             return JsonResponse(butaca_serializer.data, safe=False, status=status.HTTP_200_OK)
 
-
         elif request.method == 'POST':
             butaca_data = JSONParser().parse(request)
             butaca_serializer = ButacaSerializer(data=butaca_data)
             if butaca_serializer.is_valid():
                 butaca_serializer.save()
                 return JsonResponse(butaca_serializer.data, status=status.HTTP_201_CREATED)
-
 
         elif request.method == 'PUT':
             butaca_data = JSONParser().parse(request)
