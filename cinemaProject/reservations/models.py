@@ -33,6 +33,6 @@ class Proyeccion (models.Model):
 
 class Butaca(models.Model):
     proyeccion = models.ForeignKey('Proyeccion', on_delete=models.CASCADE,)
-    fecha = models.DateTimeField(auto_now_add=True)
+    fecha = models.DateField()
     fila = models.IntegerField()
     asiento = models.IntegerField()

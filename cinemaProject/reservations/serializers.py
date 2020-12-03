@@ -6,14 +6,15 @@ class PeliculaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Pelicula
-        fields = ('id', 'nombre', 'duracion', 'descripcion', 'detalle', 'genero', 'clasificacion', 'estado', 'fechaComienzo', 'fechaFin')
+        fields = ('id', 'nombre', 'duracion', 'descripcion', 'detalle', 'genero', 'clasificacion',
+                  'estado', 'fechaComienzo', 'fechaFin')
 
 
 class ProyeccionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Proyeccion
-        fields = ('id','sala', 'pelicula', 'fechaInicio', 'fechaFin', 'horaProyeccion', 'estado')
+        fields = ('id', 'sala', 'pelicula', 'fechaInicio', 'fechaFin', 'horaProyeccion', 'estado')
 
 
 class SalaSerializer(serializers.ModelSerializer):

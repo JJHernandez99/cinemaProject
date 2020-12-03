@@ -127,16 +127,12 @@ def proyecciones_list_range(request, fecha):
         return JsonResponse(proyecciones_serializer.data, safe=False, status=status.HTTP_200_OK)
 
 
-@api_view(['GET', 'POST', 'PUT'])
-def proyeccion_datail(request, pk):
+@api_view(['PUT'])
+def proyeccion_detail(request, pk,):
     try:
         proyeccion = Proyeccion.objects.get(pk=pk)
 
-        if request.method == 'GET':
-            proyeccion_serializer = ProyeccionSerializer(proyeccion)
-            return JsonResponse(proyeccion_serializer.data, safe=False, status=status.HTTP_200_OK)
-
-        elif request.method == 'PUT':
+        if request.method == 'PUT':
             proyeccion_data = JSONParser().parse(request)
             proyeccion_serializer = ProyeccionSerializer(proyeccion, data=proyeccion_data)
             if proyeccion_serializer.is_valid():
@@ -148,26 +144,27 @@ def proyeccion_datail(request, pk):
 
 
 # get proyeccion + fecha
-@api_view(['GET'])
-def proyeccion_datail_date(request, pk):
-    proyeccion = Proyeccion.objects.get(pk=pk)
-
-    if request.method == 'GET':
-        proyeccion_serializer = ProyeccionSerializer(proyeccion)
-        return JsonResponse(proyeccion_serializer.data, safe=False, status=status.HTTP_200_OK)
 
 
 # Butacas
-@api_view(['GET'])
+@api_view(['GET','POST'])
 def butacas_list(request):
-    if request.method == 'GET':  # todas con el listado de las butacas
-        butacas = Proyeccion.objects.all()
+    if request.method == 'GET':
+        butacas = Butaca.objects.all()
         butacas_serializer = ButacaSerializer(butacas, many=True)
         return JsonResponse(butacas_serializer.data, safe=False, status=status.HTTP_200_OK)
 
+    elif request.method == 'POST':
+        butaca_data = JSONParser().parse(request)
+        butaca_serializer = ButacaSerializer(data=butaca_data)
 
-@api_view(['GET', 'POST', 'PUT'])
-def butaca_datail(request, pk):
+        if butaca_serializer.is_valid():
+            butaca_serializer.save()
+            return JsonResponse(butaca_serializer.data, status=status.HTTP_201_CREATED)
+
+
+@api_view(['GET'])
+def butaca_detail(request, pk):
     try:
         butaca = Butaca.objects.get(pk=pk)
 
@@ -175,19 +172,13 @@ def butaca_datail(request, pk):
             butaca_serializer = ButacaSerializer(butaca)
             return JsonResponse(butaca_serializer.data, safe=False, status=status.HTTP_200_OK)
 
-        elif request.method == 'POST':
-            butaca_data = JSONParser().parse(request)
-            butaca_serializer = ButacaSerializer(data=butaca_data)
-            if butaca_serializer.is_valid():
-                butaca_serializer.save()
-                return JsonResponse(butaca_serializer.data, status=status.HTTP_201_CREATED)
 
-        elif request.method == 'PUT':
-            butaca_data = JSONParser().parse(request)
-            butaca_serializer = ButacaSerializer(butaca, data=butaca_data)
-            if butaca_serializer.is_valid():
-                butaca_serializer.save()
-                return JsonResponse(butaca_serializer.data)
+        # elif request.method == 'PUT':
+        #     butaca_data = JSONParser().parse(request)
+        #     butaca_serializer = ButacaSerializer(butaca, data=butaca_data)
+        #     if butaca_serializer.is_valid():
+        #         butaca_serializer.save()
+        #         return JsonResponse(butaca_serializer.data)
 
     except Butaca.DoesNotExist:
-        return JsonResponse({'Mensaje': 'La Butaca no existe'}, status=status.HTTP_404_NOT_FOUND)
+        return JsonResponse({'Mensaje': 'La Butaca especificada no existe'}, status=status.HTTP_404_NOT_FOUND)
