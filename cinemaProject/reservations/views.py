@@ -25,7 +25,7 @@ def peliculas_list(request):
 
 #Get proyeccion + fecha
 @api_view(['GET'])
-def pelicula_datail(request,pk):
+def pelicula_datail(request,pk,):
     
         pelicula = Pelicula.objects.get(pk=pk)
 
@@ -80,12 +80,19 @@ def sala_detail(request,pk):
 
 #Proyecciones
 @api_view(['GET'])
-def proyecciones_list(request):
+def proyecciones_list(request,pk_pelicula,pk_sala):
 
-    if request.method == 'GET': #ver el dia de hoy - todas con el listado con las peliculas 
-        proyecciones = Proyeccion.objects.all()
-        proyecciones_serializer = ProyeccionSerializer(proyecciones, many = True)
-        return JsonResponse(proyecciones_serializer.data, safe = False, status=status.HTTP_200_OK)
+    try:
+        pelicula = Pelicula.objects.get(pk=pk_pelicula)
+        sala = Sala.objects.get(pk=pk_sala)
+        
+        if request.method == 'GET': #ver el dia de hoy - todas con el listado con las peliculas 
+            proyecciones = Proyeccion.objects.all()
+            proyecciones_serializer = ProyeccionSerializer(proyecciones, many = True)
+            return JsonResponse(proyecciones_serializer.data, safe = False, status=status.HTTP_200_OK)
+
+    except Proyeccion.DoesNotExist:
+         return JsonResponse({'Mensaje' : 'La Proyeccion no existe'},status=status.HTTP_404_NOT_FOUND)
 
     #Faltaria get de todas las peliculas con un rango de fecha
 
