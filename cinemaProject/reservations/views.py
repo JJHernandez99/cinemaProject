@@ -6,7 +6,6 @@ from .serializers import PeliculaSerializer, SalaSerializer, ButacaSerializer, P
 from rest_framework.decorators import api_view
 import datetime as dt
 
-
 # Peliculas - Listo
 @api_view(['GET', 'POST'])
 def peliculas_list(request):
@@ -127,8 +126,23 @@ def proyecciones_list_range(request, fecha):
         return JsonResponse(proyecciones_serializer.data, safe=False, status=status.HTTP_200_OK)
 
 
+@api_view(['GET'])
+def proyeccion_detail_range(request, pk, fecha):
+    fecha_obj = dt.datetime.strptime(fecha, '%d-%m-%Y').date()
+    try:
+        proyeccion = Proyeccion.objects.get(pk=pk)
+
+        if request.method == 'GET':
+            data={}
+
+            proyeccion_serializer = ProyeccionSerializer(proyeccion, data=proyeccion_data)
+
+    except Proyeccion.DoesNotExist:
+        return JsonResponse({'Mensaje': 'La Proyeccion no existe'}, status=status.HTTP_404_NOT_FOUND)
+
+
 @api_view(['PUT'])
-def proyeccion_detail(request, pk,):
+def proyeccion_detail(request, pk, ):
     try:
         proyeccion = Proyeccion.objects.get(pk=pk)
 
@@ -143,11 +157,8 @@ def proyeccion_detail(request, pk,):
         return JsonResponse({'Mensaje': 'La Proyeccion no existe'}, status=status.HTTP_404_NOT_FOUND)
 
 
-# get proyeccion + fecha
-
-
 # Butacas
-@api_view(['GET','POST'])
+@api_view(['GET', 'POST'])
 def butacas_list(request):
     if request.method == 'GET':
         butacas = Butaca.objects.all()
@@ -157,13 +168,26 @@ def butacas_list(request):
     elif request.method == 'POST':
         butaca_data = JSONParser().parse(request)
         butaca_serializer = ButacaSerializer(data=butaca_data)
-
         if butaca_serializer.is_valid():
-            butaca_serializer.save()
-            return JsonResponse(butaca_serializer.data, status=status.HTTP_201_CREATED)
+            if Proyeccion.objects.get(pk=butaca_data['proyeccion']).estado == "Habilitada":
+                sala = Proyeccion.objects.get(pk=butaca_data['proyeccion']).sala
+                if butaca_data['fila']<= sala.fila and butaca_data['asiento']<= sala.asiento:
+                    butacas = Butaca.objects.filter(proyeccion=butaca_data['proyeccion'])
+                    for butaca in butacas:
+                        if butaca.fila == butaca_data['fila'] and butaca.asiento == butaca_data['asiento']:
+                            return JsonResponse({'Mensaje': 'La butaca especificada YA esta reservada'},
+                                                status=status.HTTP_400_BAD_REQUEST)
+                    butaca_serializer.save()
+                    return JsonResponse(butaca_serializer.data, status=status.HTTP_201_CREATED)
+                return JsonResponse({'Mensaje': 'El numero de butaca es invalido para la sala seleccionada'},
+                                    status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({'Mensaje': 'La proyeccion especificada esta inhabilitada para reservas'},
+                                    status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return JsonResponse(butaca_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['GET'])
+@api_view(['GET', 'PUT'])
 def butaca_detail(request, pk):
     try:
         butaca = Butaca.objects.get(pk=pk)
@@ -172,13 +196,26 @@ def butaca_detail(request, pk):
             butaca_serializer = ButacaSerializer(butaca)
             return JsonResponse(butaca_serializer.data, safe=False, status=status.HTTP_200_OK)
 
-
-        # elif request.method == 'PUT':
-        #     butaca_data = JSONParser().parse(request)
-        #     butaca_serializer = ButacaSerializer(butaca, data=butaca_data)
-        #     if butaca_serializer.is_valid():
-        #         butaca_serializer.save()
-        #         return JsonResponse(butaca_serializer.data)
+        elif request.method == 'PUT':
+            butaca_data = JSONParser().parse(request)
+            butaca_serializer = ButacaSerializer(butaca, data=butaca_data)
+            if butaca_serializer.is_valid():
+                if Proyeccion.objects.get(pk=butaca_data['proyeccion']).estado == "Habilitada":
+                    sala = Proyeccion.objects.get(pk=butaca_data['proyeccion']).sala
+                    if butaca_data['fila'] <= sala.fila and butaca_data['asiento'] <= sala.asiento:
+                        butacas = Butaca.objects.filter(proyeccion=butaca_data['proyeccion'])
+                        for butaca in butacas:
+                            if butaca.fila == butaca_data['fila'] and butaca.asiento == butaca_data['asiento']:
+                                return JsonResponse({'Mensaje': 'La butaca especificada YA esta reservada'},
+                                                    status=status.HTTP_400_BAD_REQUEST)
+                        butaca_serializer.save()
+                        return JsonResponse(butaca_serializer.data, status=status.HTTP_201_CREATED)
+                    return JsonResponse({'Mensaje': 'El numero de butaca es invalido para la sala seleccionada'},
+                                        status=status.HTTP_400_BAD_REQUEST)
+                return JsonResponse({'Mensaje': 'La proyeccion especificada esta inhabilitada para reservas'},
+                                    status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return JsonResponse(butaca_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     except Butaca.DoesNotExist:
         return JsonResponse({'Mensaje': 'La Butaca especificada no existe'}, status=status.HTTP_404_NOT_FOUND)
