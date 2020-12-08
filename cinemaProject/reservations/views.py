@@ -13,8 +13,8 @@ def peliculas_list(request):
         fecha_actual = dt.datetime.now()
         ventana_tiempo = dt.timedelta(days=10)
         pelicula = Pelicula.objects.filter(fechaFin__gte=(fecha_actual - ventana_tiempo),
-                                           fechaComienzo__lte=(fecha_actual + ventana_tiempo))
-        # pelicula=Pelicula.objects.all() trae todas las peliculas
+                                          fechaComienzo__lte=(fecha_actual + ventana_tiempo))
+
         peliculas_serializer = PeliculaSerializer(pelicula, many=True)
         return JsonResponse(peliculas_serializer.data, safe=False, status=status.HTTP_200_OK)
 
@@ -29,7 +29,7 @@ def peliculas_list(request):
 
 
 # Get pelicula + fecha -- Debemos traer los dias de la proyeccion
-@api_view(['GET'])
+@api_view(['GET','DELETE'])
 def pelicula_detail(request, pk, ):
     try:
         pelicula = Pelicula.objects.get(pk=pk)
@@ -95,21 +95,22 @@ def proyecciones_list(request, ):
     fecha_actual = dt.date.today()
     if request.method == 'GET':
         proyecciones = Proyeccion.objects.all()
-        proyecciones_pos = []
-        for proyeccion in proyecciones:
-            pelicula = Pelicula.objects.get(id=proyeccion.pelicula.pk, )
-            if pelicula.estado:
-                if pelicula.fechaFin > fecha_actual >= pelicula.fechaComienzo:
-                    proyecciones_pos.append(proyeccion)
-        proyecciones_serializer = ProyeccionSerializer(proyecciones_pos, many=True)
+        proyecciones_serializer = ProyeccionSerializer(proyecciones, many=True)
         return JsonResponse(proyecciones_serializer.data, safe=False, status=status.HTTP_200_OK)
 
     elif request.method == 'POST':
         proyeccion_data = JSONParser().parse(request)
         proyeccion_serializer = ProyeccionSerializer(data=proyeccion_data)
         if proyeccion_serializer.is_valid():
-            proyeccion_serializer.save()
-            return JsonResponse(proyeccion_serializer.data, status=status.HTTP_201_CREATED)
+            pelicula = Pelicula.objects.get(pk= proyeccion_data['pelicula'])
+            if pelicula.estado:
+                fecha_inicio = dt.datetime.strptime(proyeccion_data['fechaInicio'], '%Y-%m-%d').date()
+                fecha_fin = dt.datetime.strptime(proyeccion_data['fechaFin'], '%Y-%m-%d').date()
+                if pelicula.fechaComienzo <= fecha_inicio and pelicula.fechaFin >= fecha_fin :
+                    proyeccion_serializer.save()
+                    return JsonResponse(proyeccion_serializer.data, status=status.HTTP_201_CREATED)
+            return JsonResponse({'mensaje': 'No se pudo crear la Proyeccion'}, status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse({'mensaje': 'INVALIDO'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
@@ -135,7 +136,7 @@ def proyeccion_detail_range(request, pk, fecha):
         if request.method == 'GET':
             data={}
 
-            proyeccion_serializer = ProyeccionSerializer(proyeccion, data=proyeccion_data)
+            #proyeccion_serializer = ProyeccionSerializer(proyeccion, data=proyeccion_data)
 
     except Proyeccion.DoesNotExist:
         return JsonResponse({'Mensaje': 'La Proyeccion no existe'}, status=status.HTTP_404_NOT_FOUND)
