@@ -6,16 +6,17 @@ from .serializers import PeliculaSerializer, SalaSerializer, ButacaSerializer, P
 from rest_framework.decorators import api_view
 import datetime as dt
 
+
 # Peliculas - Listo
 @api_view(['GET', 'POST'])
 def peliculas_list(request):
     if request.method == 'GET':
+        #Devuelve peliculas con fecha valida en rango 10 dias antes y despues de la fecha actual
         fecha_actual = dt.datetime.now()
         ventana_tiempo = dt.timedelta(days=10)
-        pelicula = Pelicula.objects.filter(fechaFin__gte=(fecha_actual - ventana_tiempo),
-                                           fechaComienzo__lte=(fecha_actual + ventana_tiempo))
-        # pelicula=Pelicula.objects.all() trae todas las peliculas
-        peliculas_serializer = PeliculaSerializer(pelicula, many=True)
+        peliculas = Pelicula.objects.filter(fechaFin__gte=(fecha_actual - ventana_tiempo),
+        fechaComienzo__lte=(fecha_actual + ventana_tiempo))
+        peliculas_serializer = PeliculaSerializer(peliculas, many=True)
         return JsonResponse(peliculas_serializer.data, safe=False, status=status.HTTP_200_OK)
 
     elif request.method == 'POST':
@@ -24,11 +25,11 @@ def peliculas_list(request):
         if pelicula_serializer.is_valid():
             pelicula_serializer.save()
             return JsonResponse(pelicula_serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return JsonResponse(pelicula_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse(pelicula_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# Get pelicula + fecha -- Debemos traer los dias de la proyeccion
+# ***PENDIENTE*** Get pelicula + fecha
+
 @api_view(['GET'])
 def pelicula_detail(request, pk, ):
     try:
@@ -37,10 +38,6 @@ def pelicula_detail(request, pk, ):
         if request.method == 'GET':
             pelicula_serializer = PeliculaSerializer(pelicula)
             return JsonResponse(pelicula_serializer.data, safe=False, status=status.HTTP_200_OK)
-
-        elif request.method == 'DELETE':
-            pelicula.delete()
-            return JsonResponse({'Mensaje': 'La pelicula se elimino correctamente'}, status=status.HTTP_204_NO_CONTENT)
 
     except Pelicula.DoesNotExist:
         return JsonResponse({'Mensaje': 'La pelicula especificada no existe'}, status=status.HTTP_404_NOT_FOUND)
@@ -60,8 +57,7 @@ def salas_list(request):
         if salas_serializer.is_valid():
             salas_serializer.save()
             return JsonResponse(salas_serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return JsonResponse(salas_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse(salas_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
@@ -92,38 +88,57 @@ def sala_detail(request, pk):
 # Proyecciones
 @api_view(['GET', 'POST'])
 def proyecciones_list(request, ):
-    fecha_actual = dt.date.today()
+
     if request.method == 'GET':
-        proyecciones = Proyeccion.objects.all()
-        proyecciones_pos = []
-        for proyeccion in proyecciones:
-            pelicula = Pelicula.objects.get(id=proyeccion.pelicula.pk, )
-            if pelicula.estado:
-                if pelicula.fechaFin > fecha_actual >= pelicula.fechaComienzo:
-                    proyecciones_pos.append(proyeccion)
-        proyecciones_serializer = ProyeccionSerializer(proyecciones_pos, many=True)
+        #cartelera
+        fecha_actual = dt.date.today()
+        proyecciones = Proyeccion.objects.filter(fechaInicio__lte=fecha_actual,fechaFin__gte=fecha_actual,
+                                                 estado__exact=True)
+        #proyecciones=Proyeccion.objects.all()
+        proyecciones_serializer = ProyeccionSerializer(proyecciones, many=True)
         return JsonResponse(proyecciones_serializer.data, safe=False, status=status.HTTP_200_OK)
 
     elif request.method == 'POST':
         proyeccion_data = JSONParser().parse(request)
         proyeccion_serializer = ProyeccionSerializer(data=proyeccion_data)
         if proyeccion_serializer.is_valid():
-            proyeccion_serializer.save()
-            return JsonResponse(proyeccion_serializer.data, status=status.HTTP_201_CREATED)
+            #Solo creo proyeccion si la peli esta hab , las fechas son validas, y la sala no esta ocupada
+            pelicula=Pelicula.objects.get(pk=proyeccion_data['pelicula'])
+            sala=Sala.objects.get(pk=proyeccion_data['sala'])
+            proyecciones=Proyeccion.objects.filter(sala=sala)
+            ocupada=False
+            fecha_inicio=dt.datetime.strptime(proyeccion_data['fechaInicio'],'%Y-%m-%d').date()
+            fecha_fin=dt.datetime.strptime(proyeccion_data['fechaFin'],'%Y-%m-%d').date()
+            if(pelicula.estado):
+                if(pelicula.fechaComienzo <= fecha_inicio and
+                        pelicula.fechaFin >= fecha_fin):
+                    for proyeccion in proyecciones:
+                            if(proyeccion.fechaInicio < fecha_inicio and proyeccion.fechaFin < fecha_inicio):
+                                pass
+                            elif(proyeccion.fechaInicio > fecha_fin and proyeccion.fechaFin > fecha_fin):
+                                pass
+                            else:
+                                ocupada=True
+                            #print("sala ocupada en esa fecha por {}".format(proyeccion.pelicula.nombre))
+                    if not (ocupada):
+                        proyeccion_serializer.save()
+                        return JsonResponse(proyeccion_serializer.data, status=status.HTTP_201_CREATED)
+                #print("fecha invalida de proyeccion")
+            #print("peli deshabilitada")
+        return JsonResponse({'Mensaje': 'No se pudo crear la proyeccion'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
 def proyecciones_list_range(request, fecha):
     fecha_obj = dt.datetime.strptime(fecha, '%d-%m-%Y').date()
     if request.method == 'GET':
-        proyecciones = Proyeccion.objects.all()
-        proyecciones_hab = []
-        for proyeccion in proyecciones:
-            pelicula = Pelicula.objects.get(id=proyeccion.pelicula.pk, )
-            if pelicula.estado and pelicula.fechaFin > fecha_obj >= pelicula.fechaComienzo:
-                proyecciones_hab.append(proyeccion)
-        proyecciones_serializer = ProyeccionSerializer(proyecciones_hab, many=True)
+        proyecciones = Proyeccion.objects.filter(fechaInicio__lte=fecha_obj, fechaFin__gte=fecha_obj,
+                                                     estado__exact=True)
+        proyecciones_serializer = ProyeccionSerializer(proyecciones, many=True)
         return JsonResponse(proyecciones_serializer.data, safe=False, status=status.HTTP_200_OK)
+
+
+#-----------------------------------------8/12/20-------------------------------------------------
 
 
 @api_view(['GET'])
@@ -133,9 +148,9 @@ def proyeccion_detail_range(request, pk, fecha):
         proyeccion = Proyeccion.objects.get(pk=pk)
 
         if request.method == 'GET':
-            data={}
+            data = {}
 
-            proyeccion_serializer = ProyeccionSerializer(proyeccion, data=proyeccion_data)
+            # proyeccion_serializer = ProyeccionSerializer(proyeccion, data=proyeccion_data)
 
     except Proyeccion.DoesNotExist:
         return JsonResponse({'Mensaje': 'La Proyeccion no existe'}, status=status.HTTP_404_NOT_FOUND)
@@ -171,7 +186,7 @@ def butacas_list(request):
         if butaca_serializer.is_valid():
             if Proyeccion.objects.get(pk=butaca_data['proyeccion']).estado == "Habilitada":
                 sala = Proyeccion.objects.get(pk=butaca_data['proyeccion']).sala
-                if butaca_data['fila']<= sala.fila and butaca_data['asiento']<= sala.asiento:
+                if butaca_data['fila'] <= sala.fila and butaca_data['asiento'] <= sala.asiento:
                     butacas = Butaca.objects.filter(proyeccion=butaca_data['proyeccion'])
                     for butaca in butacas:
                         if butaca.fila == butaca_data['fila'] and butaca.asiento == butaca_data['asiento']:
@@ -182,7 +197,7 @@ def butacas_list(request):
                 return JsonResponse({'Mensaje': 'El numero de butaca es invalido para la sala seleccionada'},
                                     status=status.HTTP_400_BAD_REQUEST)
             return JsonResponse({'Mensaje': 'La proyeccion especificada esta inhabilitada para reservas'},
-                                    status=status.HTTP_400_BAD_REQUEST)
+                                status=status.HTTP_400_BAD_REQUEST)
         else:
             return JsonResponse(butaca_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

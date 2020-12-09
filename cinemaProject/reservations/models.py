@@ -17,7 +17,7 @@ class Pelicula (models.Model):
 
 class Sala (models.Model):
     nombre = models.CharField(max_length=30, help_text="Nombre de la sala")
-    estado = models.CharField(max_length=20)
+    estado = models.BooleanField(default=False)
     fila = models.IntegerField()
     asiento = models.IntegerField()
 
@@ -28,7 +28,7 @@ class Proyeccion (models.Model):
     fechaInicio = models.DateField()
     fechaFin = models.DateField()
     horaProyeccion = models.TimeField()
-    estado = models.CharField(max_length=20)
+    estado = models.BooleanField(default=False)
 
 
 class Butaca(models.Model):
