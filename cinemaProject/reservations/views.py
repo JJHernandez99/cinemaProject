@@ -73,7 +73,7 @@ def sala_detail(request, pk):
             sala_serializer = SalaSerializer(sala, data=sala_data)
             if sala_serializer.is_valid():
                 proyeccion = Proyeccion.objects.filter(sala=sala)
-                if not (proyeccion.__sizeof__() != 0):
+                if (proyeccion.count() == 0):
                     sala_serializer.save()
                     return JsonResponse(sala_serializer.data)
                 return JsonResponse({'Mensaje': 'Sala asociada, elimine la proyeccion para editar la sala'})
@@ -117,9 +117,9 @@ def proyecciones_list_range(request, fecha):
 
 
 # REALIZAR ESTE
-@api_view(['GET'])
+@api_view([])
 def proyeccion_detail_range(request, pk, fecha):
-    fecha_obj = dt.datetime.strptime(fecha, '%d-%m-%Y').date()
+    #fecha_obj = dt.datetime.strptime(fecha, '%d-%m-%Y').date()
     try:
         proyeccion = Proyeccion.objects.get(pk=pk)
 
@@ -132,12 +132,16 @@ def proyeccion_detail_range(request, pk, fecha):
         return JsonResponse({'Mensaje': 'La Proyeccion no existe'}, status=status.HTTP_404_NOT_FOUND)
 
 
-@api_view(['PUT'])
+@api_view(['GET','PUT'])
 def proyeccion_detail(request, pk, ):
     try:
         proyeccion = Proyeccion.objects.get(pk=pk)
 
-        if request.method == 'PUT':
+        if request.method == 'GET':
+            proyeccion_serializer = ProyeccionSerializer(proyeccion)
+            return JsonResponse(proyeccion_serializer.data, status=status.HTTP_200_OK)
+
+        elif request.method == 'PUT':
             proyeccion_data = JSONParser().parse(request)
             proyeccion_serializer = ProyeccionSerializer(proyeccion, data=proyeccion_data)
             if proyeccion_serializer.is_valid():
@@ -161,6 +165,7 @@ def corroborar_proyeccion(proyeccion_data, proyeccion_serializer):
             if (pelicula.fechaComienzo <= fecha_inicio and
                     pelicula.fechaFin >= fecha_fin):
                 for proyeccion in proyecciones:
+
                     if proyeccion.fechaInicio < fecha_inicio and proyeccion.fechaFin < fecha_inicio:
                         pass
                     elif proyeccion.fechaInicio > fecha_fin and proyeccion.fechaFin > fecha_fin:
@@ -170,6 +175,8 @@ def corroborar_proyeccion(proyeccion_data, proyeccion_serializer):
                                             status=status.HTTP_400_BAD_REQUEST)
                 proyeccion_serializer.save()
                 return JsonResponse(proyeccion_serializer.data, status=status.HTTP_201_CREATED)
+            return JsonResponse({'Mensaje': 'Fecha invalida para la pelicula seleccionada'},
+                                status=status.HTTP_400_BAD_REQUEST)
         return JsonResponse({'Mensaje': 'La sala esta deshabilitada'},
                             status=status.HTTP_400_BAD_REQUEST)
     return JsonResponse({'Mensaje': 'La pelicula esta deshabilitada'},
