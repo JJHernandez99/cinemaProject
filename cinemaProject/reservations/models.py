@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.core.validators import MinValueValidator
 # Create your models here.
 
 
@@ -18,8 +18,8 @@ class Pelicula (models.Model):
 class Sala (models.Model):
     nombre = models.CharField(max_length=30, help_text="Nombre de la sala")
     estado = models.BooleanField(default=False)
-    fila = models.IntegerField()
-    asiento = models.IntegerField()
+    fila = models.IntegerField(validators=[MinValueValidator(1)])
+    asiento = models.IntegerField(validators=[MinValueValidator(1)])
 
 
 class Proyeccion (models.Model):
