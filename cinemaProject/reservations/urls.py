@@ -10,6 +10,8 @@ urlpatterns = [
     url(r'^api/proyecciones$', views.proyecciones_list),
     url(r'^api/proyecciones/(?P<fecha>(0[1-9]|[12][0-9]|3[01])[- /.](0[1-9]|1[012])[- /.](19|20)\d\d$)',
         views.proyecciones_list_range),
+    url(r'^api/proyecciones/(?P<fecha>(0[1-9]|[12][0-9]|3[01])[- /.](0[1-9]|1[012])[- /.](19|20)\d\d$)',
+        views.proyecciones_list_range),
     url(r'^api/butacas$', views.butacas_list),
     url(r'^api/butacas/(?P<pk>[0-9]+)$', views.butaca_detail)
 ]
