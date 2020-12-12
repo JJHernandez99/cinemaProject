@@ -339,3 +339,47 @@ def reporte_butacas_proyeccion(request,pk,fechaI,fechaF):
 
     except Proyeccion.DoesNotExist:
             return JsonResponse({'Mensaje': 'La Proyeccion no existe'}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['GET'])
+def reporte_entradas_peliculas(request):
+    fecha_actual = dt.date.today()
+
+    if request.method == 'GET':
+        peliculas= Pelicula.objects.filter(estado=True, fechaComienzo__lte=fecha_actual, fechaFin__gte=fecha_actual)
+        respuesta=[]
+        for pelicula in peliculas:
+            total=0
+            proyecciones=Proyeccion.objects.filter(pelicula=pelicula)
+            for proyeccion in proyecciones:
+                butacas=Butaca.objects.filter(proyeccion=proyeccion, fecha__lte=fecha_actual)
+                total+=butacas.count()
+            respuesta.append({
+                'Pelicula': pelicula.nombre,
+                'Cantidad de butacas vendidas hasta {}'.format(fecha_actual): total
+            })
+
+        return JsonResponse(respuesta, safe=False, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def reporte_ranking_proyecciones(request, fechaI, fechaF):
+
+    if request.method == 'GET':
+        fechaI = dt.datetime.strptime(fechaI, '%d-%m-%Y').date()
+        fechaF = dt.datetime.strptime(fechaF, '%d-%m-%Y').date()
+
+        proyecciones=Proyeccion.objects.filter(fechaInicio__lte=fechaF, fechaFin__gte=fechaI)
+        ranking=[]
+        for proyeccion in proyecciones:
+            butacas=Butaca.objects.filter(proyeccion=proyeccion, fecha__gte=fechaI, fecha__lte=fechaF)
+            vendidas=butacas.count()
+            ranking.append({
+                'Proyeccion': proyeccion.id,
+                'Sala': proyeccion.sala.nombre,
+                'Pelicula': proyeccion.pelicula.nombre,
+                'Butacas vendidas': vendidas
+            })
+        respuesta=sorted(ranking, key=lambda k: k['Butacas vendidas'], reverse=True)
+        respuesta=respuesta[:5]
+
+        return JsonResponse(respuesta, safe=False, status=status.HTTP_200_OK)

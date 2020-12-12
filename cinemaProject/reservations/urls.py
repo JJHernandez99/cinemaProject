@@ -19,5 +19,8 @@ urlpatterns = [
         r'(?P<fechaF>(0[1-9]|[12][0-9]|3[01])[- /.](0[1-9]|1[012])[- /.](19|20)\d\d$)', views.reporte_butacas),
     url(r'^api/reportes/butacas/(?P<pk>[0-9]+)/(?P<fechaI>(0[1-9]|[12][0-9]|3[01])[- /.](0[1-9]|1[012])[- /.](19|20)\d\d)/'
         r'(?P<fechaF>(0[1-9]|[12][0-9]|3[01])[- /.](0[1-9]|1[012])[- /.](19|20)\d\d$)', views.reporte_butacas_proyeccion),
+    url(r'^api/reportes/proyecciones/(?P<fechaI>(0[1-9]|[12][0-9]|3[01])[- /.](0[1-9]|1[012])[- /.](19|20)\d\d)/'
+        r'(?P<fechaF>(0[1-9]|[12][0-9]|3[01])[- /.](0[1-9]|1[012])[- /.](19|20)\d\d$)',views.reporte_ranking_proyecciones),
+    url(r'^api/reportes/peliculas$', views.reporte_entradas_peliculas)
 ]
 
