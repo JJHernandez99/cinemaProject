@@ -12,7 +12,7 @@ class Pelicula (models.Model):
     clasificacion = models.CharField(max_length=20)
     estado = models.BooleanField(default=False)
     fechaComienzo = models.DateField()
-    fechaFin = models.DateField()
+    fechaFinalizacion = models.DateField()
 
 
 class Sala (models.Model):

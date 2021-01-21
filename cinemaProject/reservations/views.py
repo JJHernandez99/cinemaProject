@@ -15,18 +15,11 @@ def peliculas_list(request):
         # Devuelve peliculas con fecha valida en rango 10 dias antes y despues de la fecha actual
         fecha_actual = dt.datetime.now()
         ventana_tiempo = dt.timedelta(days=10)
-        r = requests.get('http://localhost:8000/api/pelicula/')
-        r = r.json()
-        respuesta = []
-        for pelicula in r:
-            if (dt.datetime.strptime(pelicula['fechaComienzo'],'%Y-%m-%dT%H:%M:%S+%f') < fecha_actual + ventana_tiempo):
-                if(dt.datetime.strptime(pelicula['fechaFinalizacion'],'%Y-%m-%dT%H:%M:%S+%f') > fecha_actual - ventana_tiempo):
-                    respuesta.append(pelicula)
-        return JsonResponse(respuesta,safe=False, status=status.HTTP_200_OK)
         #peliculas = Pelicula.objects.filter(fechaFin__gte=(fecha_actual - ventana_tiempo),
                                              #fechaComienzo__lte=(fecha_actual + ventana_tiempo))
-        # peliculas_serializer = PeliculaSerializer(peliculas, many=True)
-        # return JsonResponse(peliculas_serializer.data,safe=False, status=status.HTTP_200_OK)
+        peliculas = Pelicula.objects.all()
+        peliculas_serializer = PeliculaSerializer(peliculas, many=True)
+        return JsonResponse(peliculas_serializer.data,safe=False, status=status.HTTP_200_OK)
 
     elif request.method == 'POST':
         pelicula_data = JSONParser().parse(request)
