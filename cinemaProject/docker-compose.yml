@@ -7,18 +7,18 @@ services:
       - MYSQL_DATABASE=movies
       - MYSQL_USER=usuario
       - MYSQL_PASSWORD=clave
-#    ports:
-#      - "3306:3306"
-#  myadmin:
-#    image: "phpmyadmin/phpmyadmin"
-#    environment:
-#      - PMA_HOST=mysql:3306
-#    links:
-#      - mysql
-#    ports:
-#      - "8080:80"
-#    depends_on:
-#      - mysql
+  #    ports:
+  #      - "3306:3306"
+  #  myadmin:
+  #    image: "phpmyadmin/phpmyadmin"
+  #    environment:
+  #      - PMA_HOST=mysql:3306
+  #    links:
+  #      - mysql
+  #    ports:
+  #      - "8080:80"
+  #    depends_on:
+  #      - mysql
   movies:
     #image: "movies:1.0"
     image: "fervillano/movies:1.1"

@@ -15,11 +15,11 @@ def peliculas_list(request):
         # Devuelve peliculas con fecha valida en rango 10 dias antes y despues de la fecha actual
         fecha_actual = dt.datetime.now()
         ventana_tiempo = dt.timedelta(days=10)
-        #peliculas = Pelicula.objects.filter(fechaFin__gte=(fecha_actual - ventana_tiempo),
-                                             #fechaComienzo__lte=(fecha_actual + ventana_tiempo))
+        # peliculas = Pelicula.objects.filter(fechaFin__gte=(fecha_actual - ventana_tiempo),
+        # fechaComienzo__lte=(fecha_actual + ventana_tiempo))
         peliculas = Pelicula.objects.all()
         peliculas_serializer = PeliculaSerializer(peliculas, many=True)
-        return JsonResponse(peliculas_serializer.data,safe=False, status=status.HTTP_200_OK)
+        return JsonResponse(peliculas_serializer.data, safe=False, status=status.HTTP_200_OK)
 
     elif request.method == 'POST':
         pelicula_data = JSONParser().parse(request)
@@ -30,42 +30,53 @@ def peliculas_list(request):
         return JsonResponse(pelicula_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-#Get pelicula + fecha
+# Get pelicula + fecha
 @api_view(['GET'])
 def pelicula_detail(request, pk, fechaI, fechaF):
-
     try:
         pelicula = Pelicula.objects.get(pk=pk)
 
         if request.method == 'GET':
             pelicula_serializer = PeliculaSerializer(pelicula)
-            respuesta=[]
+            respuesta = []
             fechaI = dt.datetime.strptime(fechaI, '%d-%m-%Y').date()
             fechaF = dt.datetime.strptime(fechaF, '%d-%m-%Y').date()
-            proyecciones = Proyeccion.objects.filter(pelicula=pelicula,fechaFin__gte=fechaI, fechaInicio__lte=fechaF)
-            if proyecciones.count()!=0:
+            proyecciones = Proyeccion.objects.filter(pelicula=pelicula, fechaFin__gte=fechaI, fechaInicio__lte=fechaF)
+            if proyecciones.count() != 0:
                 respuesta.append({
                     'Pelicula': pelicula.nombre
                 }
                 )
-                fechas=[]
-                c=0
+                fechas = []
+                c = 0
                 for proyeccion in proyecciones:
                     fecha_actual = max(fechaI, proyeccion.fechaInicio)
                     fechas.append([])
-                    while(fecha_actual<= fechaF and fecha_actual <=proyeccion.fechaFin):
+                    while (fecha_actual <= fechaF and fecha_actual <= proyeccion.fechaFin):
                         fechas[c].append(fecha_actual)
                         fecha_actual += dt.timedelta(days=1)
                     respuesta.append({
                         'Proyeccion': proyeccion.id,
                         'Sala': proyeccion.sala.nombre,
-                        'Fechas proyeccion': '{} al {}'.format(proyeccion.fechaInicio,proyeccion.fechaFin),
+                        'Fechas proyeccion': '{} al {}'.format(proyeccion.fechaInicio, proyeccion.fechaFin),
                         'Fechas Disponibles': fechas[c]
                     })
-                    c+=1
+                    c += 1
                 return JsonResponse(respuesta, safe=False, status=status.HTTP_200_OK)
             return JsonResponse({'Mensaje': 'No existen proyecciones de la pelicula en las fechas deseadas'},
-                                    status=status.HTTP_204_NO_CONTENT)
+                                status=status.HTTP_204_NO_CONTENT)
+
+    except Pelicula.DoesNotExist:
+        return JsonResponse({'Mensaje': 'La pelicula especificada no existe'}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['DELETE'])
+def pelicula_delete(request, pk):
+    try:
+        pelicula = Pelicula.objects.get(pk=pk)
+        if request.method == 'DELETE':
+            pelicula.delete()
+            return JsonResponse({'Mensaje': 'La pelicula se elimino correctamente'}, status=status.HTTP_204_NO_CONTENT)
 
     except Pelicula.DoesNotExist:
         return JsonResponse({'Mensaje': 'La pelicula especificada no existe'}, status=status.HTTP_404_NOT_FOUND)
@@ -104,9 +115,9 @@ def sala_detail(request, pk):
                 proyecciones = Proyeccion.objects.filter(sala=sala)
                 if (proyecciones.count() != 0):
                     for proyeccion in proyecciones:
-                        if(proyeccion.estado):
+                        if (proyeccion.estado):
                             return JsonResponse({'Mensaje':
-                                                'Sala asociada, deshabilite la proyeccion para editar la sala'})
+                                                     'Sala asociada, deshabilite la proyeccion para editar la sala'})
                 sala_serializer.save()
                 return JsonResponse(sala_serializer.data)
             return JsonResponse(sala_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -155,18 +166,18 @@ def proyeccion_detail_range(request, pk, fecha):
         proyeccion = Proyeccion.objects.get(pk=pk)
 
         if request.method == 'GET':
-            pelicula_serializer=PeliculaSerializer(proyeccion.pelicula)
-            sala_serializer=SalaSerializer(proyeccion.sala)
-            butacas= Butaca.objects.filter(proyeccion=proyeccion, fecha=fecha_obj)
+            pelicula_serializer = PeliculaSerializer(proyeccion.pelicula)
+            sala_serializer = SalaSerializer(proyeccion.sala)
+            butacas = Butaca.objects.filter(proyeccion=proyeccion, fecha=fecha_obj)
 
-            butacas_posiciones={}
-            id=0
+            butacas_posiciones = {}
+            id = 0
             for fila in range(proyeccion.sala.fila):
                 for asiento in range(proyeccion.sala.asiento):
                     for butaca in butacas:
-                        if((butaca.fila-1)==fila):
-                            if((butaca.asiento-1)==asiento):
-                                butacas_posiciones[id]={
+                        if ((butaca.fila - 1) == fila):
+                            if ((butaca.asiento - 1) == asiento):
+                                butacas_posiciones[id] = {
                                     'fila': butaca.fila,
                                     'asiento': butaca.asiento,
                                     'estado': 'Reservada',
@@ -175,14 +186,14 @@ def proyeccion_detail_range(request, pk, fecha):
                         butacas_posiciones[id]
                     except:
                         butacas_posiciones[id] = {
-                            'fila': fila+1,
-                            'asiento': asiento+1,
+                            'fila': fila + 1,
+                            'asiento': asiento + 1,
                             'estado': 'Libre',
                         }
                     finally:
-                        id+=1
+                        id += 1
 
-            respuesta={
+            respuesta = {
                 'Pelicula': pelicula_serializer.data,
                 'Sala': sala_serializer.data,
                 'Butacas': butacas_posiciones
@@ -194,7 +205,7 @@ def proyeccion_detail_range(request, pk, fecha):
         return JsonResponse({'Mensaje': 'La Proyeccion no existe'}, status=status.HTTP_404_NOT_FOUND)
 
 
-@api_view(['GET','PUT'])
+@api_view(['GET', 'PUT'])
 def proyeccion_detail(request, pk, ):
     try:
         proyeccion = Proyeccion.objects.get(pk=pk)
@@ -214,7 +225,7 @@ def proyeccion_detail(request, pk, ):
         return JsonResponse({'Mensaje': 'La Proyeccion no existe'}, status=status.HTTP_404_NOT_FOUND)
 
 
-def corroborar_proyeccion(proyeccion_data, proyeccion_serializer,proyeccion_orig=None):
+def corroborar_proyeccion(proyeccion_data, proyeccion_serializer, proyeccion_orig=None):
     # Solo creo proyeccion si la peli esta hab , las fechas son validas, y la sala no esta deshab ni ocupada
     pelicula = Pelicula.objects.get(pk=proyeccion_data['pelicula'])
     sala = Sala.objects.get(pk=proyeccion_data['sala'])
@@ -245,7 +256,7 @@ def corroborar_proyeccion(proyeccion_data, proyeccion_serializer,proyeccion_orig
 
 
 # Butacas
-@api_view(['GET', 'POST','DELETE'])
+@api_view(['GET', 'POST', 'DELETE'])
 def butacas_list(request):
     if request.method == 'GET':
         butacas = Butaca.objects.all()
@@ -282,10 +293,10 @@ def butaca_detail(request, pk):
 
 def corroborar_butaca(butaca_data, butaca_serializer):
     proyeccion = Proyeccion.objects.get(pk=butaca_data['proyeccion'])
-    fecha=dt.datetime.strptime(butaca_data['fecha'],'%Y-%m-%d').date()
+    fecha = dt.datetime.strptime(butaca_data['fecha'], '%Y-%m-%d').date()
     if proyeccion.estado:
         sala = proyeccion.sala
-        if(fecha<=proyeccion.fechaFin and fecha>=proyeccion.fechaInicio):
+        if (fecha <= proyeccion.fechaFin and fecha >= proyeccion.fechaInicio):
             if butaca_data['fila'] <= sala.fila and butaca_data['asiento'] <= sala.asiento:
                 butacas = Butaca.objects.filter(proyeccion=butaca_data['proyeccion'],
                                                 fecha=dt.datetime.strptime(butaca_data['fecha'], '%Y-%m-%d').date())
@@ -302,36 +313,35 @@ def corroborar_butaca(butaca_data, butaca_serializer):
     return JsonResponse({'Mensaje': 'La proyeccion especificada esta inhabilitada para reservas'},
                         status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['GET'])
-def reporte_butacas(request,fechaI,fechaF):
 
-    if request.method=='GET':
+@api_view(['GET'])
+def reporte_butacas(request, fechaI, fechaF):
+    if request.method == 'GET':
         fechaI = dt.datetime.strptime(fechaI, '%d-%m-%Y').date()
         fechaF = dt.datetime.strptime(fechaF, '%d-%m-%Y').date()
 
-        butacas=Butaca.objects.filter(fecha__gte=fechaI,fecha__lte=fechaF)
-        cantidad_butacas=butacas.count()
-        respuesta={
-            'Rango de fecha':'{} al {}'.format(fechaI,fechaF),
+        butacas = Butaca.objects.filter(fecha__gte=fechaI, fecha__lte=fechaF)
+        cantidad_butacas = butacas.count()
+        respuesta = {
+            'Rango de fecha': '{} al {}'.format(fechaI, fechaF),
             'Cantidad de butacas vendidas en el periodo': cantidad_butacas
         }
-        return JsonResponse(respuesta,status=status.HTTP_200_OK)
+        return JsonResponse(respuesta, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
-def reporte_butacas_proyeccion(request,pk,fechaI,fechaF):
-
+def reporte_butacas_proyeccion(request, pk, fechaI, fechaF):
     try:
         proyeccion = Proyeccion.objects.get(pk=pk)
 
-        if request.method=='GET':
+        if request.method == 'GET':
             fechaI = dt.datetime.strptime(fechaI, '%d-%m-%Y').date()
             fechaF = dt.datetime.strptime(fechaF, '%d-%m-%Y').date()
 
-            butacas=Butaca.objects.filter(fecha__gte=fechaI,fecha__lte=fechaF,proyeccion=proyeccion)
-            cantidad_butacas=butacas.count()
-            respuesta={
-                'Rango de fecha':'{} al {}'.format(fechaI,fechaF),
+            butacas = Butaca.objects.filter(fecha__gte=fechaI, fecha__lte=fechaF, proyeccion=proyeccion)
+            cantidad_butacas = butacas.count()
+            respuesta = {
+                'Rango de fecha': '{} al {}'.format(fechaI, fechaF),
                 'Proyeccion': proyeccion.id,
                 'Pelicula': proyeccion.pelicula.nombre,
                 'Sala': proyeccion.sala.nombre,
@@ -340,21 +350,22 @@ def reporte_butacas_proyeccion(request,pk,fechaI,fechaF):
             return JsonResponse(respuesta, status=status.HTTP_200_OK)
 
     except Proyeccion.DoesNotExist:
-            return JsonResponse({'Mensaje': 'La Proyeccion no existe'}, status=status.HTTP_404_NOT_FOUND)
+        return JsonResponse({'Mensaje': 'La Proyeccion no existe'}, status=status.HTTP_404_NOT_FOUND)
+
 
 @api_view(['GET'])
 def reporte_entradas_peliculas(request):
     fecha_actual = dt.date.today()
 
     if request.method == 'GET':
-        peliculas= Pelicula.objects.filter(estado=True, fechaComienzo__lte=fecha_actual, fechaFin__gte=fecha_actual)
-        respuesta=[]
+        peliculas = Pelicula.objects.filter(estado=True, fechaComienzo__lte=fecha_actual, fechaFin__gte=fecha_actual)
+        respuesta = []
         for pelicula in peliculas:
-            total=0
-            proyecciones=Proyeccion.objects.filter(pelicula=pelicula)
+            total = 0
+            proyecciones = Proyeccion.objects.filter(pelicula=pelicula)
             for proyeccion in proyecciones:
-                butacas=Butaca.objects.filter(proyeccion=proyeccion, fecha__lte=fecha_actual)
-                total+=butacas.count()
+                butacas = Butaca.objects.filter(proyeccion=proyeccion, fecha__lte=fecha_actual)
+                total += butacas.count()
             respuesta.append({
                 'Pelicula': pelicula.nombre,
                 'Cantidad de butacas vendidas hasta {}'.format(fecha_actual): total
@@ -365,23 +376,22 @@ def reporte_entradas_peliculas(request):
 
 @api_view(['GET'])
 def reporte_ranking_proyecciones(request, fechaI, fechaF):
-
     if request.method == 'GET':
         fechaI = dt.datetime.strptime(fechaI, '%d-%m-%Y').date()
         fechaF = dt.datetime.strptime(fechaF, '%d-%m-%Y').date()
 
-        proyecciones=Proyeccion.objects.filter(fechaInicio__lte=fechaF, fechaFin__gte=fechaI)
-        ranking=[]
+        proyecciones = Proyeccion.objects.filter(fechaInicio__lte=fechaF, fechaFin__gte=fechaI)
+        ranking = []
         for proyeccion in proyecciones:
-            butacas=Butaca.objects.filter(proyeccion=proyeccion, fecha__gte=fechaI, fecha__lte=fechaF)
-            vendidas=butacas.count()
+            butacas = Butaca.objects.filter(proyeccion=proyeccion, fecha__gte=fechaI, fecha__lte=fechaF)
+            vendidas = butacas.count()
             ranking.append({
                 'Proyeccion': proyeccion.id,
                 'Sala': proyeccion.sala.nombre,
                 'Pelicula': proyeccion.pelicula.nombre,
                 'Butacas vendidas': vendidas
             })
-        respuesta=sorted(ranking, key=lambda k: k['Butacas vendidas'], reverse=True)
-        respuesta=respuesta[:5]
+        respuesta = sorted(ranking, key=lambda k: k['Butacas vendidas'], reverse=True)
+        respuesta = respuesta[:5]
 
         return JsonResponse(respuesta, safe=False, status=status.HTTP_200_OK)
