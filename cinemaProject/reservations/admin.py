@@ -18,7 +18,7 @@ class ProyeccionesAdmin(admin.ModelAdmin):
 
 class ButacasAdmin(admin.ModelAdmin):
     list_display = ("id","proyeccion", "fecha", "fila", "asiento")
-    list_filter = ("id","proyeccion", "fecha", "fila", "asiento")
+    list_filter = ("proyeccion", "fecha", "fila", "asiento")
 
 
 admin.site.register(Pelicula, PeliculasAdmin)
