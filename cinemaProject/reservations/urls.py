@@ -3,7 +3,7 @@ from reservations import views
 
 urlpatterns = [
     url(r'^api/peliculas$', views.peliculas_list),
-    url(r'^api/peliculas/(?P<pk>[0-9]+)$', views.pelicula_delete),
+    #url(r'^api/peliculas/(?P<pk>[0-9]+)$', views.pelicula_delete),
     url(r'^api/peliculas/(?P<pk>[0-9]+)/(?P<fechaI>(0[1-9]|[12][0-9]|3[01])[- /.](0[1-9]|1[012])[- /.](19|20)\d\d)/'
         r'(?P<fechaF>(0[1-9]|[12][0-9]|3[01])[- /.](0[1-9]|1[012])[- /.](19|20)\d\d$)', views.pelicula_detail),
     url(r'^api/salas$', views.salas_list),
