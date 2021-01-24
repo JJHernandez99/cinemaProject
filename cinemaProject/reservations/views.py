@@ -351,7 +351,7 @@ def reporte_butacas_proyeccion(request, pk, fechaI, fechaF):
     except Proyeccion.DoesNotExist:
         return JsonResponse({'Mensaje': 'La Proyeccion no existe'}, status=status.HTTP_404_NOT_FOUND)
 
-
+#http://localhost:8000/api/reportes/peliculas
 @api_view(['GET'])
 def reporte_entradas_peliculas(request):
     fecha_actual = dt.date.today()
